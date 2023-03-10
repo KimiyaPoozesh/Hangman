@@ -4,34 +4,14 @@ import random
 
 # setup display
 pygame.init()
-WIDTH, HEIGHT = 800, 500
+WIDTH, HEIGHT = 900, 600
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Hangman Game!")
 
-
-
-# fonts
-LETTER_FONT = pygame.font.SysFont('comicsans', 40)
-WORD_FONT = pygame.font.SysFont('comicsans', 60)
-TITLE_FONT = pygame.font.SysFont('comicsans', 70)
-
-# load images.
-images = []
-for i in range(7):
-    image = pygame.image.load("hangman" + str(i) + ".png")
-    images.append(image)
-words = ["AS"]
-word = random.choice(words)
-guessed= []
-hangman_status = 0
+# button variables
 RADIUS = 20
 GAP = 15
 letters = []
-level=0
-word = random.choice(words)
-guessed= []
-# متغیر های مربوط به دکمه ها
-    
 startx = round((WIDTH - (RADIUS * 2 + GAP) * 13) / 2)
 starty = 400
 A = 65
@@ -39,23 +19,77 @@ for i in range(26):
     x = startx + GAP * 2 + ((RADIUS * 2 + GAP) * (i % 13))
     y = starty + ((i // 13) * (GAP + RADIUS * 2))
     letters.append([x, y, chr(A + i), True])
-    
-    
+
+# fonts
+LETTER_FONT = pygame.font.SysFont('comicsans', 40)
+WORD_FONT = pygame.font.SysFont('comicsans', 30)
+TITLE_FONT = pygame.font.SysFont('comicsans', 70)
+
+# load images.
+images = []
+for i in range(7):
+    image = pygame.image.load("hangman" + str(i) + ".png")
+    images.append(image)
+
+# game variables
+hangman_status = 0
+level=1
+lvl1 = {"GAS":'in the gas state matter has no definite volume or shape', "AIR":'a mixture of games like oxygen,carbon dioxide...', "AIR":'a mixture of games like oxygen,carbon dioxide...',
+        "DNA":'Deoxyribonucleic acid','MASS':'measure of how much matter an object contains' }
+
+lvl2={'SOLID':'in the solid state has a definite shape and volume','ORGAN':'a body part that does a special job within a body system ',
+      'BRAIN':'a complex organ that controls our body','LUNGS':'pair of air-filled organs located on either side of the chest'}
+lvl3={'VOLUME':'the amount of space an obiact takes up','LIQUID':'liquid state has a definite volume but has no shape of its own',
+      'CONDENSES':'when a gas condenses it changes into liquid','EVAPORATES':'when the liquid evaporates it turns into gas'}
+word = random.choice(list(lvl1.keys()))
+guessed = []
+
 # colors
-WHITE = (255, 245, 238)
-BLACK = (128, 0, 128)
-RADIUS = 20
-GAP = 15
-def display_message(message):
-    pygame.time.delay(1000)
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+
+def drawButtons():
+        # draw buttons
+    for letter in letters:
+        x, y, ltr, visible = letter
+        if visible:
+            pygame.draw.circle(win, BLACK, (x, y), RADIUS, 3)
+            text = LETTER_FONT.render(ltr, 1, BLACK)
+            win.blit(text, (x - text.get_width()/2, y - text.get_height()/2))
+def draw():
     win.fill(WHITE)
-    text = WORD_FONT.render(message, 1, BLACK)
-    win.blit(text, (WIDTH/2 - text.get_width()/2, HEIGHT/2 - text.get_height()/2))
+    # draw title
+    # text = TITLE_FONT.render("DEVELOPER HANGMAN", 1, BLACK)
+    # win.blit(text, (WIDTH/2 - text.get_width()/2, 20))
+    # draw word
+    display_word = ""
+    for letter in word:
+        if letter in guessed:
+            display_word += letter + " "
+        else:
+            display_word += "_ "
+    text = TITLE_FONT.render(display_word, 1, BLACK)
+    win.blit(text, (400, 200))
+    drawButtons()
+    win.blit(images[hangman_status], (150, 100))
+    pygame.display.update()
+    
+def render_multi_line(text, x, y, fsize):
+        lines = text.splitlines()
+        for i, l in enumerate(lines):
+            win.blit(WORD_FONT.render(l, 0, BLACK), (x, y + fsize*i))
+
+def display_message(message):
+    pygame.time.delay(100)
+    win.fill(WHITE)
+    render_multi_line(message,WIDTH/2 - WORD_FONT.render(message, 1, BLACK).get_width()/2,HEIGHT/2 - WORD_FONT.render(message, 1, BLACK).get_height()/2,10)
+    # text = WORD_FONT.render(message, 1, BLACK)
+    # win.blit(text, (WIDTH/2 - text.get_width()/2, HEIGHT/2 - text.get_height()/2))
     pygame.display.update()
     pygame.time.delay(3000)
-    
-    
-def logic(hangman_status):
+
+def main():
+    global hangman_status
     global level
     FPS = 60
     clock = pygame.time.Clock()
@@ -77,31 +111,9 @@ def logic(hangman_status):
                             letter[3] = False
                             guessed.append(ltr)
                             if ltr not in word:
-                                print(hangman_status)
                                 hangman_status += 1
-                                
         
-        win.fill(WHITE)
-        # draw word
-        display_word = ""
-        for letter in word:
-            if letter in guessed:
-                display_word += letter + " "
-            else:
-                display_word += "_ "
-        text = WORD_FONT.render(display_word, 1, BLACK)
-        win.blit(text, (400, 200))
-
-        # draw buttons
-        for letter in letters:
-            x, y, ltr, visible = letter
-            if visible:
-                pygame.draw.circle(win, BLACK, (x, y), RADIUS, 3)
-                text = LETTER_FONT.render(ltr, 1, BLACK)
-                win.blit(text, (x - text.get_width()/2, y - text.get_height()/2))
-
-        win.blit(images[hangman_status], (150, 100))
-        pygame.display.update()
+        draw()
 
         won = True
         for letter in word:
@@ -110,23 +122,34 @@ def logic(hangman_status):
                 break
         
         if won:
-            display_message("You WON!")
+            if (level==1):
+                display_message(lvl1[word])
+            elif(level==2):
+                display_message(lvl2[word])
+            else:
+                display_message(lvl3[word])
             level+=1
-            hangman_status=0
             return True
 
         if hangman_status == 6:
             display_message("You LOST!")
+            display_message("The word was: "+word)
             return False
+    
+while True:
+    if main():
+        print("here")
+        hangman_status=0
+        guessed=[]
+        for letter in letters:
+            letter[3]=True
         
-        
-if logic(0) & level<3:
-    hangman_status=0
-    word = random.choice(words)
-    guessed= [] 
-    for i in range(26):
-        x = startx + GAP * 2 + ((RADIUS * 2 + GAP) * (i % 13))
-        y = starty + ((i // 13) * (GAP + RADIUS * 2))
-        letters.append([x, y, chr(A + i), True])
-    logic(0)
-pygame.quit()
+        if level==2:
+            word = random.choice(list(lvl2.keys()))
+        elif level ==3:
+            word = random.choice(list(lvl3.keys()))
+        if level==4:
+            display_message("You WOON!")
+            pygame.quit()    
+    else:
+        pygame.quit()
